@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}My Lists — GroceryFlow{% endblock %}
+{% block description %}Manage all your grocery shopping lists in one place.{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <!-- Hero Header -->
+  <div class="dashboard-header">
+    <div class="dashboard-hero">
+      <h1 class="dashboard-title">
+        <span class="greeting-icon">👋</span>
+        Hey, <span class="username-highlight">{{ current_user.username }}</span>!
+      </h1>
+      <p class="dashboard-subtitle">What are you shopping for today?</p>
+    </div>
+    <!-- Create New List -->
+    <div class="create-list-card">
+      <form method="POST" action="{{ url_for('new_list') }}" class="create-form" id="create-list-form">
+        <div class="create-input-group">
+          <span class="create-icon"><i class="fa-solid fa-plus"></i></span>
+          <input
+            type="text"
+            name="name"
+            id="new-list-name"
+            class="create-input"
+            placeholder="Name your new grocery list…"
+            required
+            maxlength="120"
+          />
+          <button type="submit" class="btn btn-primary" id="create-list-btn">
+            <i class="fa-solid fa-cart-plus"></i> Create
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-value">{{ all_lists | length }}</div>
+      <div class="stat-label">Total Lists</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ favourites | length }}</div>
+      <div class="stat-label">Favourites</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">
+        {{ all_lists | sum(attribute='total_items') }}
+      </div>
+      <div class="stat-label">Total Items</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">
+        {{ all_lists | sum(attribute='checked_items') }}
+      </div>
+      <div class="stat-label">Checked Off</div>
+    </div>
+  </div>
+
+  <!-- Favourites Section -->
+  {% if favourites %}
+  <section class="list-section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="fa-solid fa-star"></i> Favourites
+      </h2>
+      <span class="section-badge">{{ favourites | length }}</span>
+    </div>
+    <div class="lists-grid">
+      {% for lst in favourites %}
+      {{ render_list_card(lst) }}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- All Lists Section -->
+  <section class="list-section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="fa-solid fa-list-ul"></i> All Lists
+      </h2>
+      <span class="section-badge">{{ all_lists | length }}</span>
+    </div>
+    {% if all_lists %}
+    <div class="lists-grid">
+      {% for lst in all_lists %}
+      <div class="list-card {% if lst.is_favourite %}is-favourite{% endif %}" id="list-card-{{ lst.id }}">
+        <div class="list-card-top">
+          <div class="list-card-info">
+            <h3 class="list-card-name">{{ lst.name }}</h3>
+            <p class="list-card-meta">
+              <i class="fa-regular fa-calendar"></i>
+              {{ lst.created_at.strftime('%b %d, %Y') }}
+            </p>
+          </div>
+          <button
+            class="fav-btn {% if lst.is_favourite %}active{% endif %}"
+            onclick="toggleFavourite({{ lst.id }}, this)"
+            id="fav-btn-{{ lst.id }}"
+            title="{{ 'Remove from favourites' if lst.is_favourite else 'Add to favourites' }}"
+          >
+            <i class="fa-{% if lst.is_favourite %}solid{% else %}regular{% endif %} fa-star"></i>
+          </button>
+        </div>
+
+        <div class="list-card-progress">
+          <div class="progress-info">
+            <span class="progress-text">{{ lst.checked_items }} / {{ lst.total_items }} items</span>
+            <span class="progress-pct">{{ lst.progress }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ lst.progress }}%"></div>
+          </div>
+        </div>
+
+        <div class="list-card-footer">
+          <a href="{{ url_for('list_detail', list_id=lst.id) }}" class="btn btn-accent btn-sm" id="open-list-{{ lst.id }}">
+            <i class="fa-solid fa-arrow-right"></i> Open
+          </a>
+          <form method="POST" action="{{ url_for('delete_list', list_id=lst.id) }}" class="inline-form"
+            onsubmit="return confirm('Delete \'{{ lst.name }}\'? This cannot be undone.')">
+            <button type="submit" class="btn btn-danger-ghost btn-sm" id="delete-list-{{ lst.id }}">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🛍️</div>
+      <h3 class="empty-title">No lists yet</h3>
+      <p class="empty-desc">Create your first grocery list above to get started!</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}{{ grocery_list.name }} — GroceryFlow{% endblock %}
+{% block description %}Manage items in your {{ grocery_list.name }} grocery list.{% endblock %}
+
+{% block content %}
+<div class="list-detail-page">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="{{ url_for('dashboard') }}" class="breadcrumb-link" id="back-to-dashboard">
+      <i class="fa-solid fa-house"></i> Dashboard
+    </a>
+    <i class="fa-solid fa-chevron-right breadcrumb-sep"></i>
+    <span class="breadcrumb-current">{{ grocery_list.name }}</span>
+  </div>
+
+  <!-- List Header -->
+  <div class="list-header glass-card">
+    <div class="list-header-left">
+      <div class="list-title-row">
+        <h1 class="list-title" id="list-title-display">{{ grocery_list.name }}</h1>
+        <button class="icon-btn" onclick="toggleRenameForm()" id="rename-toggle-btn" title="Rename list">
+          <i class="fa-solid fa-pen"></i>
+        </button>
+        <button
+          class="fav-btn fav-btn-lg {% if grocery_list.is_favourite %}active{% endif %}"
+          onclick="toggleFavourite({{ grocery_list.id }}, this)"
+          id="fav-btn-{{ grocery_list.id }}"
+          title="{{ 'Remove from favourites' if grocery_list.is_favourite else 'Add to favourites' }}"
+        >
+          <i class="fa-{% if grocery_list.is_favourite %}solid{% else %}regular{% endif %} fa-star"></i>
+        </button>
+      </div>
+
+      <!-- Rename Form (hidden by default) -->
+      <form method="POST" action="{{ url_for('rename_list', list_id=grocery_list.id) }}"
+        class="rename-form hidden" id="rename-form">
+        <input type="text" name="name" class="form-input rename-input"
+          value="{{ grocery_list.name }}" id="rename-input" required maxlength="120" />
+        <button type="submit" class="btn btn-primary btn-sm" id="rename-submit-btn">
+          <i class="fa-solid fa-check"></i> Save
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleRenameForm()" id="rename-cancel-btn">
+          Cancel
+        </button>
+      </form>
+
+      <p class="list-meta">
+        <i class="fa-regular fa-calendar"></i>
+        Created {{ grocery_list.created_at.strftime('%B %d, %Y') }}
+      </p>
+    </div>
+
+    <div class="list-header-right">
+      <!-- Progress Circle -->
+      <div class="progress-circle-wrap">
+        <svg class="progress-circle" viewBox="0 0 80 80" id="progress-svg">
+          <defs>
+            <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#6c63ff"/>
+              <stop offset="100%" style="stop-color:#00d4aa"/>
+            </linearGradient>
+          </defs>
+          <circle class="circle-bg" cx="40" cy="40" r="32"/>
+          <circle class="circle-fill" cx="40" cy="40" r="32"
+            stroke="url(#progressGrad)"
+            stroke-dasharray="201"
+            stroke-dashoffset="{{ 201 - (201 * grocery_list.progress / 100) }}"
+            id="circle-fill-path"
+          />
+        </svg>
+        <div class="progress-center">
+          <span class="progress-pct-big" id="progress-pct-display">{{ grocery_list.progress }}%</span>
+        </div>
+      </div>
+      <div class="list-stats-mini">
+        <span class="stat-mini" id="checked-count-display">{{ grocery_list.checked_items }}</span>
+        <span class="stat-mini-label">/ {{ grocery_list.total_items }} done</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Item Form -->
+  <div class="add-item-card glass-card">
+    <h2 class="section-title-sm"><i class="fa-solid fa-plus-circle"></i> Add Item</h2>
+    <form method="POST" action="{{ url_for('add_item', list_id=grocery_list.id) }}" id="add-item-form">
+      <div class="add-item-grid">
+        <div class="form-group">
+          <label for="item-name" class="form-label">Item Name *</label>
+          <input type="text" id="item-name" name="name" class="form-input"
+            placeholder="e.g. Organic Spinach" required maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label for="item-category" class="form-label">Category</label>
+          <select id="item-category" name="category" class="form-select">
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ category_icons[cat] }} {{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group form-group-short">
+          <label for="item-quantity" class="form-label">Qty</label>
+          <input type="number" id="item-quantity" name="quantity" class="form-input"
+            value="1" min="0.1" step="0.1" max="9999" />
+        </div>
+        <div class="form-group form-group-short">
+          <label for="item-unit" class="form-label">Unit</label>
+          <select id="item-unit" name="unit" class="form-select">
+            {% for unit in units %}
+            <option value="{{ unit }}">{{ unit }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group form-group-full">
+          <label for="item-notes" class="form-label">Notes <span class="optional">(optional)</span></label>
+          <input type="text" id="item-notes" name="notes" class="form-input"
+            placeholder="e.g. organic, low-sodium…" maxlength="300" />
+        </div>
+      </div>
+      <div class="add-item-actions">
+        <button type="submit" class="btn btn-primary" id="add-item-btn">
+          <i class="fa-solid fa-cart-plus"></i> Add to List
+        </button>
+        <form method="POST" action="{{ url_for('clear_checked', list_id=grocery_list.id) }}" class="inline-form">
+          <button type="submit" class="btn btn-ghost btn-sm" id="clear-checked-btn"
+            onclick="return confirm('Remove all checked items?')"
+            {% if grocery_list.checked_items == 0 %}disabled{% endif %}>
+            <i class="fa-solid fa-broom"></i> Clear Checked
+          </button>
+        </form>
+      </div>
+    </form>
+  </div>
+
+  <!-- Items Section -->
+  <div class="items-section">
+    {% if sorted_categories %}
+      {% for cat, items in sorted_categories %}
+      <div class="category-group" id="cat-{{ cat | replace(' ', '-') | replace('&', '') }}">
+        <div class="category-header">
+          <span class="category-icon">{{ category_icons[cat] }}</span>
+          <h2 class="category-name">{{ cat }}</h2>
+          <span class="category-count">{{ items | length }}</span>
+        </div>
+        <div class="items-list">
+          {% for item in items %}
+          <div class="item-row {% if item.is_checked %}item-checked{% endif %}" id="item-row-{{ item.id }}">
+            <button
+              class="check-btn {% if item.is_checked %}checked{% endif %}"
+              onclick="toggleItem({{ item.id }}, this, {{ grocery_list.id }})"
+              id="check-btn-{{ item.id }}"
+              title="{{ 'Uncheck' if item.is_checked else 'Check off' }}"
+            >
+              <i class="fa-solid {% if item.is_checked %}fa-circle-check{% else %}fa-circle{% endif %}" id="check-icon-{{ item.id }}"></i>
+            </button>
+
+            <div class="item-info">
+              <span class="item-name" id="item-name-{{ item.id }}">{{ item.name }}</span>
+              <span class="item-qty">
+                {{ item.quantity | int if item.quantity == item.quantity | int else item.quantity }} {{ item.unit }}
+              </span>
+              {% if item.notes %}
+              <span class="item-notes">{{ item.notes }}</span>
+              {% endif %}
+            </div>
+
+            <button
+              class="delete-item-btn"
+              onclick="deleteItem({{ item.id }}, this)"
+              id="delete-item-{{ item.id }}"
+              title="Remove item"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🥕</div>
+      <h3 class="empty-title">Your list is empty</h3>
+      <p class="empty-desc">Add your first item above to start building your list!</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const LIST_ID = {{ grocery_list.id }};
+  const TOTAL_ITEMS = {{ grocery_list.total_items }};
+
+  function toggleRenameForm() {
+    const form = document.getElementById('rename-form');
+    const title = document.getElementById('list-title-display');
+    form.classList.toggle('hidden');
+    title.classList.toggle('hidden');
+    if (!form.classList.contains('hidden')) {
+      document.getElementById('rename-input').focus();
+    }
+  }
+</script>
+{% endblock %}

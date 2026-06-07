@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Login — GroceryFlow{% endblock %}
+{% block description %}Login to GroceryFlow and manage your grocery lists.{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">🛒</div>
+      <h1 class="auth-title">GroceryFlow</h1>
+      <p class="auth-subtitle">Welcome back! Sign in to your account.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('login') }}" class="auth-form" id="login-form">
+      <div class="form-group">
+        <label for="username" class="form-label">
+          <i class="fa-solid fa-user"></i> Username
+        </label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form-input"
+          placeholder="Enter your username"
+          required
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">
+          <i class="fa-solid fa-lock"></i> Password
+        </label>
+        <div class="input-with-icon">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            placeholder="Enter your password"
+            required
+            autocomplete="current-password"
+          />
+          <button type="button" class="toggle-password" onclick="togglePassword('password')" id="toggle-password-btn">
+            <i class="fa-solid fa-eye" id="toggle-password-icon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="checkbox-label" id="remember-label">
+          <input type="checkbox" name="remember" id="remember" />
+          <span class="checkbox-custom"></span>
+          Remember me
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" id="login-submit-btn">
+        <i class="fa-solid fa-right-to-bracket"></i> Sign In
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Don't have an account? <a href="{{ url_for('register') }}" id="go-register-link">Create one free</a></p>
+    </div>
+  </div>
+
+  <div class="auth-decor">
+    <div class="decor-blob blob-1"></div>
+    <div class="decor-blob blob-2"></div>
+    <div class="decor-blob blob-3"></div>
+  </div>
+</div>
+{% endblock %}

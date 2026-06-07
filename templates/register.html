@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Register — GroceryFlow{% endblock %}
+{% block description %}Create a free GroceryFlow account and start managing your grocery lists.{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">🛒</div>
+      <h1 class="auth-title">GroceryFlow</h1>
+      <p class="auth-subtitle">Create your free account and shop smarter.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('register') }}" class="auth-form" id="register-form">
+      <div class="form-group">
+        <label for="username" class="form-label">
+          <i class="fa-solid fa-user"></i> Username
+        </label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form-input"
+          placeholder="Choose a username"
+          required
+          autocomplete="username"
+          minlength="3"
+          maxlength="80"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">
+          <i class="fa-solid fa-envelope"></i> Email Address
+        </label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          class="form-input"
+          placeholder="you@example.com"
+          required
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">
+          <i class="fa-solid fa-lock"></i> Password
+        </label>
+        <div class="input-with-icon">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            placeholder="At least 6 characters"
+            required
+            autocomplete="new-password"
+            minlength="6"
+          />
+          <button type="button" class="toggle-password" onclick="togglePassword('password')" id="toggle-pw-btn">
+            <i class="fa-solid fa-eye" id="toggle-pw-icon"></i>
+          </button>
+        </div>
+        <div class="password-strength" id="password-strength"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirm_password" class="form-label">
+          <i class="fa-solid fa-shield-halved"></i> Confirm Password
+        </label>
+        <div class="input-with-icon">
+          <input
+            type="password"
+            id="confirm_password"
+            name="confirm_password"
+            class="form-input"
+            placeholder="Repeat your password"
+            required
+            autocomplete="new-password"
+          />
+          <button type="button" class="toggle-password" onclick="togglePassword('confirm_password')" id="toggle-confirm-btn">
+            <i class="fa-solid fa-eye" id="toggle-confirm-icon"></i>
+          </button>
+        </div>
+        <div class="match-indicator" id="match-indicator"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" id="register-submit-btn">
+        <i class="fa-solid fa-user-plus"></i> Create Account
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Already have an account? <a href="{{ url_for('login') }}" id="go-login-link">Sign in</a></p>
+    </div>
+  </div>
+
+  <div class="auth-decor">
+    <div class="decor-blob blob-1"></div>
+    <div class="decor-blob blob-2"></div>
+    <div class="decor-blob blob-3"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const pwInput = document.getElementById('password');
+  const confirmInput = document.getElementById('confirm_password');
+  const strengthEl = document.getElementById('password-strength');
+  const matchEl = document.getElementById('match-indicator');
+
+  pwInput.addEventListener('input', () => {
+    const val = pwInput.value;
+    let strength = 0;
+    if (val.length >= 6) strength++;
+    if (val.length >= 10) strength++;
+    if (/[A-Z]/.test(val)) strength++;
+    if (/[0-9]/.test(val)) strength++;
+    if (/[^A-Za-z0-9]/.test(val)) strength++;
+    const labels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+    const classes = ['', 'strength-weak', 'strength-fair', 'strength-good', 'strength-strong', 'strength-very-strong'];
+    strengthEl.textContent = val ? `Strength: ${labels[strength]}` : '';
+    strengthEl.className = 'password-strength ' + (val ? classes[strength] : '');
+  });
+
+  confirmInput.addEventListener('input', () => {
+    if (!confirmInput.value) { matchEl.textContent = ''; return; }
+    if (pwInput.value === confirmInput.value) {
+      matchEl.textContent = '✓ Passwords match';
+      matchEl.className = 'match-indicator match-ok';
+    } else {
+      matchEl.textContent = '✗ Passwords do not match';
+      matchEl.className = 'match-indicator match-fail';
+    }
+  });
+</script>
+{% endblock %}
