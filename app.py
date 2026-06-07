@@ -5,8 +5,10 @@ from models import db, User, GroceryList, GroceryItem, CATEGORIES, UNITS, CATEGO
 import os
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "grocery-secret-key-2024-xK9mP3qR"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///grocery.db"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "grocery-dev-fallback-key-2024")
+# Use an absolute path so the DB is always created next to app.py
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(BASE_DIR, "grocery.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
